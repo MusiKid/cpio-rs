@@ -6,7 +6,7 @@ fn main() {
     let path = std::env::args().nth(1).unwrap();
     let mut file = std::fs::File::open(path).unwrap();
     loop {
-        let reader = cpio::NewcReader::new(file).unwrap();
+        let reader = cpio::NewcReader::new_newc(file).unwrap();
         if reader.entry().is_trailer() {
             break;
         }

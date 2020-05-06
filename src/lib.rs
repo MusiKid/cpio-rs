@@ -8,6 +8,7 @@
 use std::io;
 use std::iter::Iterator;
 
+pub mod header;
 pub mod newc;
 pub use newc::Builder as NewcBuilder;
 pub use newc::Reader as NewcReader;

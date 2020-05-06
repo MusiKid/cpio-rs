@@ -24,13 +24,6 @@ pub struct Entry {
     rdev_minor: u32,
 }
 
-/// Reads one entry header/data from an archive.
-pub struct Reader<R: Read> {
-    inner: R,
-    entry: Entry,
-    bytes_read: u32,
-}
-
 /// Builds metadata for one entry to be written into an archive.
 pub struct Builder {
     name: String,
@@ -44,6 +37,13 @@ pub struct Builder {
     dev_minor: u32,
     rdev_major: u32,
     rdev_minor: u32,
+}
+
+/// Reads one entry header/data from an archive.
+pub struct Reader<R: Read> {
+    inner: R,
+    entry: Entry,
+    bytes_read: u32,
 }
 
 /// Writes one entry header/data into an archive.
@@ -144,7 +144,7 @@ impl Entry {
 impl<R: Read> Reader<R> {
     /// Parses metadata for the next entry in an archive, and returns a reader
     /// that will yield the entry data.
-    pub fn new(mut inner: R) -> io::Result<Reader<R>> {
+    pub fn new_newc(mut inner: R) -> io::Result<Reader<R>> {
         // char    c_magic[6];
         let mut magic = [0u8; 6];
         inner.read_exact(&mut magic)?;
@@ -330,9 +330,9 @@ impl Builder {
         Writer {
             inner: w,
             written: 0,
-            file_size: file_size,
+            file_size,
             header_size: header.len(),
-            header: header,
+            header,
         }
     }
 
@@ -466,13 +466,13 @@ mod tests {
         let output = trailer(output).unwrap();
 
         // Now read the archive back in and make sure we get the same data.
-        let mut reader = Reader::new(output.as_slice()).unwrap();
+        let mut reader = Reader::new_newc(output.as_slice()).unwrap();
         assert_eq!(reader.entry.name(), "./hello_world");
         assert_eq!(reader.entry.file_size(), length);
         let mut contents = vec![];
         copy(&mut reader, &mut contents).unwrap();
         assert_eq!(contents, data);
-        let reader = Reader::new(reader.finish().unwrap()).unwrap();
+        let reader = Reader::new_newc(reader.finish().unwrap()).unwrap();
         assert!(reader.entry().is_trailer());
     }
 
@@ -520,7 +520,7 @@ mod tests {
         let output = trailer(output).unwrap();
 
         // Now read the archive back in and make sure we get the same data.
-        let mut reader = Reader::new(output.as_slice()).unwrap();
+        let mut reader = Reader::new_newc(output.as_slice()).unwrap();
         assert_eq!(reader.entry().name(), "./hello_world");
         assert_eq!(reader.entry().file_size(), length1);
         assert_eq!(reader.entry().ino(), 1);
@@ -531,7 +531,7 @@ mod tests {
         copy(&mut reader, &mut contents).unwrap();
         assert_eq!(contents, data1);
 
-        let mut reader = Reader::new(reader.finish().unwrap()).unwrap();
+        let mut reader = Reader::new_newc(reader.finish().unwrap()).unwrap();
         assert_eq!(reader.entry().name(), "./hello_world2");
         assert_eq!(reader.entry().file_size(), length2);
         assert_eq!(reader.entry().ino(), 2);
@@ -539,7 +539,7 @@ mod tests {
         copy(&mut reader, &mut contents).unwrap();
         assert_eq!(contents, data2);
 
-        let reader = Reader::new(reader.finish().unwrap()).unwrap();
+        let reader = Reader::new_newc(reader.finish().unwrap()).unwrap();
         assert!(reader.entry().is_trailer());
     }
 }
